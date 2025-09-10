@@ -1,21 +1,19 @@
 subreddits:
-  - AskReddit
-  - news
   - formula1
   - F1Technical
 
-query: ""
-since: ""
-until: ""
+query: ""          # empty => use "new" feed
+since: ""          # leave empty while testing
+until: ""          # leave empty while testing
 
 max_posts_per_subreddit: 20
 
-fetch_comments: false
-max_comments_per_post: 0
-comment_depth: "all"
+fetch_comments: true          # set true if you want comments
+max_comments_per_post: 0       # ignored if fetch_comments: false
+comment_depth: "all"           # "all" | 1 | 2 ...
 
 out_dir: "out"
-format: "csv"
+format: "csv"                  # "csv" or "json"
 rotate_every_n_posts: 2000
 
 sleep_between_requests_ms: 250
