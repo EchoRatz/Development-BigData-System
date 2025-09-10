@@ -1,0 +1,7 @@
+praw==7.8.1
+python-dotenv==1.0.1
+pandas==2.2.2
+pyarrow==17.0.0
+tenacity==8.5.0
+tqdm==4.66.4
+pyyaml==6.0.2

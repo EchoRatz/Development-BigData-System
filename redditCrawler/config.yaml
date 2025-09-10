@@ -1,0 +1,21 @@
+subreddits:
+  - AskReddit
+  - news
+  - formula1
+  - F1Technical
+
+query: ""
+since: ""
+until: ""
+
+max_posts_per_subreddit: 20
+
+fetch_comments: false
+max_comments_per_post: 0
+comment_depth: "all"
+
+out_dir: "out"
+format: "csv"
+rotate_every_n_posts: 2000
+
+sleep_between_requests_ms: 250
