@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run crawler",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/reddit_crawler.py",
+      "args": ["--config", "config.yaml"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "justMyCode": true
+    }
+  ]
+}

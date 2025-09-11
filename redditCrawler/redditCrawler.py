@@ -249,16 +249,35 @@ def run(args):
     with open(args.config, "r", encoding="utf-8") as f:
         import yaml
         cfg = yaml.safe_load(f)
+        
+    import os, time, json
+    config_path = os.path.abspath(args.config)
+    try:
+        st = os.stat(config_path)
+        print(f"[CONFIG] Using: {config_path} (size={st.st_size}B, mtime={time.ctime(st.st_mtime)})")
+    except Exception as e:
+        print(f"[CONFIG] Using: {config_path} (stat failed: {e})")
+
+    print("[CONFIG] Parsed subreddits:", json.dumps(cfg.get("subreddits", [])))
+    print("[CONFIG] query:", repr((cfg.get("query","") or "").strip()),
+          "| since:", repr(cfg.get("since","") or ""),
+          "| until:", repr(cfg.get("until","") or ""))
+
 
     subs: List[str] = cfg.get("subreddits", [])
-    query: str = cfg.get("query", "") or ""
-    since_iso: str = cfg.get("since", "") or ""
-    until_iso: str = cfg.get("until", "") or ""
+    query: str = (cfg.get("query", "") or "").strip()
+    since_iso: str = (cfg.get("since", "") or "").strip()
+    until_iso: str = (cfg.get("until", "") or "").strip()
 
     since = iso_to_epoch(since_iso)
     until = iso_to_epoch(until_iso)
 
-    max_posts = to_safe_int(cfg.get("max_posts_per_subreddit"), None)
+    raw_max = cfg.get("max_posts_per_subreddit", None)
+    if raw_max in (None, 0, "0", "", "none", "None"):
+        max_posts = None
+    else:
+        max_posts = to_safe_int(raw_max, None)
+
 
     # Comments settings
     fetch_comments = bool(cfg.get("fetch_comments", cfg.get("comments", {}).get("fetch", True)))
@@ -272,10 +291,16 @@ def run(args):
     # Output
     out_dir = cfg.get("out_dir", cfg.get("output", {}).get("out_dir", "out"))
     fmt = (cfg.get("format", cfg.get("output", {}).get("format", "csv")) or "csv").lower()
-    rotate_every = to_safe_int(cfg.get("rotate_every_n_posts", cfg.get("output", {}).get("rotate_every_n_posts", 2000)), 2000)
+    rotate_every = to_safe_int(
+        cfg.get("rotate_every_n_posts", cfg.get("output", {}).get("rotate_every_n_posts", 2000)),
+        2000
+    )
 
     # Performance
-    sleep_ms = to_safe_int(cfg.get("sleep_between_requests_ms", cfg.get("performance", {}).get("sleep_between_requests_ms", 250)), 250)
+    sleep_ms = to_safe_int(
+        cfg.get("sleep_between_requests_ms", cfg.get("performance", {}).get("sleep_between_requests_ms", 250)),
+        250
+    )
 
     # Writers
     posts_writer = RotatingWriter(out_dir, "posts", fmt, rotate_every)
@@ -284,10 +309,18 @@ def run(args):
     # Client
     rc = RedditClient()
 
+    # Decide mode:
+    # - If query is non-empty -> SEARCH mode (server-side filtering).
+    # - If query is empty     -> NEW mode (client-side time filtering using since/until).
+    use_search = bool(query)
+
+    # Helpful debug line (safe to keep)
+    print(f"MODE: {'search' if use_search else 'new'} | query={repr(query)} | since={since_iso or '∅'} | until={until_iso or '∅'} | subs={subs}")
+
     # Crawl
     for sub in subs:
         print(f"\n=== Subreddit: r/{sub} ===")
-        if since or until or query:
+        if use_search:
             it = rc.search_submissions(sub, query=query, since=since, until=until)
         else:
             it = rc.new_submissions(sub)
@@ -296,7 +329,7 @@ def run(args):
         for s in tqdm(it, desc=f"posts r/{sub}"):
             p = flatten_submission(s)
 
-            # Guard window (search should already filter; double-check anyway)
+            # Local time window guard (always applies when provided)
             if since and p["created_utc"] and p["created_utc"] < since:
                 continue
             if until and p["created_utc"] and p["created_utc"] > until:
@@ -329,6 +362,7 @@ def run(args):
         comments_writer.close()
 
     print("\nDone.")
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Reddit crawler (posts + comments) with CSV/JSON + depth control.")

@@ -1,19 +1,9 @@
-subreddits:
-  - formula1
-  - F1Technical
-
-query: ""          # empty => use "new" feed
-since: ""          # leave empty while testing
-until: ""          # leave empty while testing
-
-max_posts_per_subreddit: 20
-
-fetch_comments: true          # set true if you want comments
-max_comments_per_post: 0       # ignored if fetch_comments: false
-comment_depth: "all"           # "all" | 1 | 2 ...
-
+subreddits: [formula1]
+query: ""                          # <= empty means NEW mode
+since: "2025-01-01T00:00:00Z"
+until: "2025-09-11T00:00:00Z"
+fetch_comments: true
+max_comments_per_post: 0
+comment_depth: "all"
 out_dir: "out"
-format: "csv"                  # "csv" or "json"
-rotate_every_n_posts: 2000
-
-sleep_between_requests_ms: 250
+format: "csv"
